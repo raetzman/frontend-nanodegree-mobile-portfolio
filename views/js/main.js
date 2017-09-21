@@ -449,7 +449,7 @@ var resizePizzas = function(size) {
 
   // Iterates through pizza elements on the page and changes their widths
   function changePizzaSizes(size) {
-    var pizzaContainers = document.querySelectorAll(".randomPizzaContainer");
+    var pizzaContainers = document.getElementsByClassName("randomPizzaContainer"); //var pizzaContainers = document.querySelectorAll(".randomPizzaContainer");
     var dx = determineDx(pizzaContainers[0], size);
     var newwidth = (pizzaContainers[0].offsetWidth + dx) + 'px';
     for (var i = 0; i < pizzaContainers.length; i++) {
@@ -505,13 +505,16 @@ function updatePositions() {
   var items = document.querySelectorAll('.mover');
 
   var phase = [];
-  //var bodyScrollTopHelp = document.body.scrollTop / 1250;
-  for(var j = 0; j < items.length; j++){
-    phase.push(Math.sin((document.body.scrollTop / 1250) + (j % 5)));
+  // bodyScrollTopHelp goes from [0-10] which is [0;3PI] or at least almost
+  // error in my google chrome brwoser - document.body.scrollTop return 0 - I contacted service
+  // IE works, which is my third most liked browser
+  var bodyScrollTopHelp = document.body.scrollTop / 1250;
+  for(var j = 0; j < 5; j++){
+    phase.push(Math.sin((bodyScrollTopHelp) + (j % 5)));
   }
 
   for (var i = 0; i < items.length; i++) {
-    items[i].style.left = items[i].basicLeft + 100 * phase[i] + 'px';
+    items[i].style.left = items[i].basicLeft + 100 * phase[i%5] + 'px';
   }
 
   // User Timing API to the rescue again. Seriously, it's worth learning.
@@ -528,10 +531,26 @@ function updatePositions() {
 window.addEventListener('scroll', updatePositions);
 
 // Generates the sliding pizzas when the page loads.
+// There is something wrong here and I love challanges - the pizzas are created in the left nirvana - they shouldnt be smaller 0
 document.addEventListener('DOMContentLoaded', function() {
+  generateMovingPizzas();
+  updatePositions();
+});
+// handle the resive event
+document.addEventListener('resize', function() {
+  generateMovingPizzas();
+  updatePositions();
+});
+
+function generateMovingPizzas(){
+  // This line will clear all pizzas - as by using resize a new amount of pizzas will be generated
+  document.querySelector("#movingPizzas1").innerHTML = '';
   var cols = 8;
   var s = 256;
-  for (var i = 0; i < 50; i++) {
+  // at least 8 pizzas - some pizzas to much is ok but never less pizzas (8 pizzas per row)
+  var numberOfPizzas = window.innerHeight / s * cols + 8;
+  //console.log("window.innerHeight: " + window.innerHeight + "numberOfPizzas: " + numberOfPizzas);
+  for (var i = 0; i <= numberOfPizzas; i++) {
     var elem = document.createElement('img');
     elem.className = 'mover';
     elem.src = "images/pizza.png";
@@ -541,5 +560,28 @@ document.addEventListener('DOMContentLoaded', function() {
     elem.style.top = (Math.floor(i / cols) * s) + 'px';
     document.querySelector("#movingPizzas1").appendChild(elem);
   }
+}
+// using an algorithm to calculate the amount
+window.addEventListener("regeneratePizzasBecauseOfResize", function() {
+  generateMovingPizzas();
   updatePositions();
 });
+// this is to addEventlistener on any event (used to register resize)
+(function() {
+    var throttle = function(type, name, obj) {
+        obj = obj || window;
+        var running = false;
+        var func = function() {
+            if (running) { return; }
+            running = true;
+             requestAnimationFrame(function() {
+                obj.dispatchEvent(new CustomEvent(name));
+                running = false;
+            });
+        };
+        obj.addEventListener(type, func);
+    };
+
+    /* init - you can init any event regeneratePizzasBecauseOfResize*/
+    throttle("resize", "regeneratePizzasBecauseOfResize");
+})();
