@@ -506,8 +506,8 @@ function updatePositions() {
 
   var phase = [];
   //var bodyScrollTopHelp = document.body.scrollTop / 1250;
-  for(var i = 0; i < items.length; i++){
-    phase.push(Math.sin((document.body.scrollTop / 1250) + (i % 5)));
+  for(var j = 0; j < items.length; j++){
+    phase.push(Math.sin((document.body.scrollTop / 1250) + (j % 5)));
   }
 
   for (var i = 0; i < items.length; i++) {
